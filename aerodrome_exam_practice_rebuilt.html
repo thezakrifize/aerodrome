@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Aerodrome Exam Practice</title>
+  <style>
+    :root{
+      --bg:#081427;
+      --panel:#0d2344;
+      --panel-2:#12315f;
+      --text:#f4f7ff;
+      --muted:#c5d1e6;
+      --line:rgba(255,255,255,.10);
+      --danger:#c62839;
+      --danger-2:#ff6b6b;
+      --ok:#25b36a;
+      --ok-bg:rgba(37,179,106,.14);
+      --bad-bg:rgba(198,40,57,.14);
+      --shadow:0 18px 40px rgba(0,0,0,.30);
+      --radius:18px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:Segoe UI, Arial, Helvetica, sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(circle at top right, rgba(198,40,57,.18), transparent 26%),
+        linear-gradient(180deg, #05101f 0%, var(--bg) 100%);
+      line-height:1.55;
+    }
+    .wrap{
+      width:min(1000px, 92vw);
+      margin:28px auto 56px;
+    }
+    .hero{
+      background:linear-gradient(135deg, #0f2b54 0%, #0a1c37 66%, #74111f 100%);
+      border:1px solid var(--line);
+      border-radius:24px;
+      box-shadow:var(--shadow);
+      padding:28px;
+      margin-bottom:22px;
+    }
+    h1{
+      margin:0 0 8px;
+      font-size:clamp(28px, 4vw, 40px);
+    }
+    .subtitle{
+      color:var(--muted);
+      margin:0;
+      font-size:15px;
+    }
+    .toolbar{
+      display:flex;
+      flex-wrap:wrap;
+      gap:12px;
+      margin-top:18px;
+      align-items:center;
+    }
+    .pill{
+      background:rgba(255,255,255,.08);
+      border:1px solid var(--line);
+      border-radius:999px;
+      padding:10px 14px;
+      font-weight:700;
+    }
+    .btn{
+      border:none;
+      border-radius:12px;
+      padding:12px 16px;
+      font-weight:800;
+      cursor:pointer;
+      background:linear-gradient(180deg, #ffffff 0%, #dfe8f7 100%);
+      color:#0a1830;
+    }
+    .quiz{
+      display:flex;
+      flex-direction:column;
+      gap:18px;
+    }
+    .card{
+      background:linear-gradient(180deg, var(--panel) 0%, #091b34 100%);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:22px;
+    }
+    .qnum{
+      display:inline-block;
+      padding:6px 10px;
+      border-radius:999px;
+      background:rgba(255,255,255,.08);
+      border:1px solid var(--line);
+      font-size:13px;
+      font-weight:800;
+      margin-bottom:10px;
+    }
+    .question{
+      margin:0 0 14px;
+      font-size:19px;
+      font-weight:800;
+    }
+    .choices{
+      display:grid;
+      gap:10px;
+    }
+    .choice{
+      width:100%;
+      text-align:left;
+      padding:14px 16px;
+      border-radius:14px;
+      border:1px solid var(--line);
+      background:linear-gradient(180deg, var(--panel-2) 0%, #11284f 100%);
+      color:var(--text);
+      cursor:pointer;
+      transition:transform .14s ease, border-color .14s ease, background .14s ease;
+      font-size:15px;
+    }
+    .choice:hover{
+      transform:translateY(-1px);
+      border-color:rgba(255,255,255,.18);
+    }
+    .choice.locked{cursor:default}
+    .choice.correct{
+      background:linear-gradient(180deg, rgba(37,179,106,.18), rgba(37,179,106,.10));
+      border-color:rgba(37,179,106,.95);
+    }
+    .choice.wrong{
+      background:linear-gradient(180deg, rgba(198,40,57,.22), rgba(198,40,57,.10));
+      border-color:rgba(255,107,107,.95);
+    }
+    .feedback{
+      display:none;
+      margin-top:14px;
+      padding:14px 16px;
+      border-radius:14px;
+      border-left:5px solid #3b82f6;
+      background:rgba(255,255,255,.05);
+    }
+    .feedback.show{display:block}
+    .feedback.ok{
+      border-left-color:var(--ok);
+      background:var(--ok-bg);
+    }
+    .feedback.bad{
+      border-left-color:var(--danger-2);
+      background:var(--bad-bg);
+    }
+    .feedback strong{
+      display:block;
+      margin-bottom:6px;
+    }
+    .footer{
+      margin-top:22px;
+      color:var(--muted);
+      text-align:center;
+      font-size:14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="hero">
+      <h1>Aerodrome Exam Practice</h1>
+      <p class="subtitle">English • 4 choices • Instant feedback with explanation • Dark blue / white / red theme</p>
+      <div class="toolbar">
+        <div class="pill">Score: <span id="score">0</span> / <span id="totalA">0</span></div>
+        <div class="pill">Answered: <span id="answered">0</span> / <span id="totalB">0</span></div>
+        <button class="btn" onclick="resetQuiz()">Reset Quiz</button>
+      </div>
+    </section>
+
+    <section id="quiz" class="quiz"></section>
+
+    <div class="footer">
+      Rebuilt from scratch. Questions 22–25 were rewritten carefully so the declared-distance choices are clean and consistent.
+    </div>
+  </div>
+
+  <script>
+    const quizData = [
+      {
+        q: "1) Which is the best definition of an aerodrome?",
+        choices: [
+          "A defined area on land or water intended to be used for the arrival, departure, and surface movement of aircraft",
+          "A building used only by air traffic controllers",
+          "A paved area used only for commercial aircraft parking",
+          "An area used only for helicopters"
+        ],
+        answer: 0,
+        explanation: "An aerodrome is the defined area intended for aircraft arrival, departure, and surface movement. It is broader than just a runway or terminal."
+      },
+      {
+        q: "2) Which is the best definition of a clearway?",
+        choices: [
+          "A paved area beyond the runway for rejected take-off braking",
+          "A defined rectangular area beyond the runway under aerodrome control, selected so an aircraft may make part of its initial climb to a specified height",
+          "A turning area at the runway end",
+          "A safety strip located only beside a taxiway"
+        ],
+        answer: 1,
+        explanation: "A clearway is used for the initial climb after take-off. It is not the same as a stopway."
+      },
+      {
+        q: "3) In this exam guide, what is the expected answer for the number of airports in Thailand?",
+        choices: [
+          "29",
+          "35",
+          "39",
+          "47"
+        ],
+        answer: 2,
+        explanation: "For this practice set, the expected answer is 39, matching the guide you provided."
+      },
+      {
+        q: "4) Which is the best definition of an apron?",
+        choices: [
+          "A defined area on a land aerodrome intended to accommodate aircraft for loading, unloading, fueling, parking, or maintenance",
+          "A safety area beyond the runway threshold",
+          "A designated route only for airport buses",
+          "A runway strip used in low visibility operations"
+        ],
+        answer: 0,
+        explanation: "An apron is the aircraft servicing and parking area used for loading, unloading, fueling, parking, and maintenance."
+      },
+      {
+        q: "5) A runway has a magnetic bearing of 084°. What runway number should it normally be assigned?",
+        choices: [
+          "07",
+          "08",
+          "09",
+          "18"
+        ],
+        answer: 1,
+        explanation: "Runway numbers use the magnetic bearing rounded to the nearest 10 degrees, with the last digit dropped. 084° becomes runway 08."
+      },
+      {
+        q: "6) What color are runway markings?",
+        choices: [
+          "Yellow",
+          "White",
+          "Blue",
+          "Red"
+        ],
+        answer: 1,
+        explanation: "Runway markings are white."
+      },
+      {
+        q: "7) What color are taxiway markings?",
+        choices: [
+          "White",
+          "Blue",
+          "Yellow",
+          "Green"
+        ],
+        answer: 2,
+        explanation: "Taxiway markings are yellow so they are clearly distinguished from runway markings."
+      },
+      {
+        q: "8) What is the best definition of a stopway?",
+        choices: [
+          "A defined rectangular area beyond the take-off runway, suitable for an aircraft to stop in the case of an aborted take-off",
+          "A defined area beyond the runway for initial climb",
+          "A runway turn-around area for backtracking",
+          "A parking area for disabled aircraft only"
+        ],
+        answer: 0,
+        explanation: "A stopway is associated with stopping after an aborted take-off, not climbing out."
+      },
+      {
+        q: "9) What marking is commonly used to identify a stopway?",
+        choices: [
+          "Yellow broken center line",
+          "White chevrons",
+          "Red threshold bar",
+          "Blue edge lights"
+        ],
+        answer: 1,
+        explanation: "A stopway is commonly identified by white chevrons."
+      },
+      {
+        q: "10) What is the main purpose of a runway turn pad?",
+        choices: [
+          "To increase take-off distance available",
+          "To increase landing distance available",
+          "To allow an aircraft to turn at the runway end where a full-width turn-around area is not available",
+          "To provide an area for de-icing vehicles"
+        ],
+        answer: 2,
+        explanation: "A runway turn pad helps aircraft turn safely at the runway end, especially when backtracking."
+      },
+      {
+        q: "11) What is a runway holding position (holding point)?",
+        choices: [
+          "A point where passengers wait for boarding",
+          "A designated position intended to protect a runway, obstacle limitation surface, or ILS/MLS sensitive area",
+          "A parking stand marking on the apron",
+          "A touchdown zone marking"
+        ],
+        answer: 1,
+        explanation: "A holding point is a protected position where aircraft or vehicles must stop unless authorized to proceed."
+      },
+      {
+        q: "12) To pass a runway holding point, permission must normally be obtained from whom?",
+        choices: [
+          "The handling agent",
+          "The airport security officer",
+          "Air traffic control",
+          "Any pilot already on frequency"
+        ],
+        answer: 2,
+        explanation: "Crossing or passing the runway holding point requires ATC authorization."
+      },
+      {
+        q: "13) Where is the runway center line marking located?",
+        choices: [
+          "Along the longitudinal center of the runway",
+          "At the runway edge only",
+          "Only at the threshold",
+          "Parallel to the taxiway edge"
+        ],
+        answer: 0,
+        explanation: "The runway center line is painted along the middle of the runway length."
+      },
+      {
+        q: "14) Which is the best definition of a taxiway?",
+        choices: [
+          "A defined path on a land aerodrome established for the taxiing of aircraft and intended to provide a link between one part of the aerodrome and another",
+          "A paved area used only for landing",
+          "A surface used only for ground vehicles",
+          "A shoulder beside the runway"
+        ],
+        answer: 0,
+        explanation: "A taxiway is the defined route used for aircraft taxiing between different parts of the aerodrome."
+      },
+      {
+        q: "15) What is the normal appearance of a taxiway edge marking?",
+        choices: [
+          "A single broken white line",
+          "Two solid yellow lines",
+          "Two solid white lines",
+          "Alternating red and white blocks"
+        ],
+        answer: 1,
+        explanation: "Taxiway edge markings are shown as two solid yellow lines."
+      },
+      {
+        q: "16) Where is the aerodrome reference point (ARP) located?",
+        choices: [
+          "At the main terminal",
+          "At the control tower",
+          "At the geometric center of the aerodrome or near its initial planned geometric center",
+          "At the threshold of the longest runway"
+        ],
+        answer: 2,
+        explanation: "The ARP is established at or near the geometric center of the aerodrome."
+      },
+      {
+        q: "17) When you encounter a mandatory instruction sign, what must you do?",
+        choices: [
+          "Treat it as advisory only",
+          "Ignore it if no traffic is visible",
+          "Comply with the instruction and do not proceed unless authorized where required",
+          "Proceed slowly without contacting ATC"
+        ],
+        answer: 2,
+        explanation: "Mandatory instruction signs are not advisory. They indicate a required action, such as stop or hold."
+      },
+      {
+        q: "18) What are the colors of a location sign?",
+        choices: [
+          "Black background with yellow inscription",
+          "Yellow background with black inscription",
+          "Red background with white inscription",
+          "Blue background with white inscription"
+        ],
+        answer: 0,
+        explanation: "A location sign has a black background with yellow inscription and border."
+      },
+      {
+        q: "19) What are the colors of a direction sign?",
+        choices: [
+          "Black background with yellow inscription",
+          "Yellow background with black inscription",
+          "Red background with white inscription",
+          "White background with black inscription"
+        ],
+        answer: 1,
+        explanation: "A direction sign has a yellow background with black inscription."
+      },
+      {
+        q: "20) In this guide, runway condition reporting starts from which end of the runway?",
+        choices: [
+          "The higher runway number end",
+          "The lower runway number end",
+          "The midpoint of the runway",
+          "The departure end only"
+        ],
+        answer: 1,
+        explanation: "For this exam guide, the expected answer is the lower runway number end."
+      },
+      {
+        q: "21) At minimum, how many wind socks should an aerodrome have?",
+        choices: [
+          "One",
+          "Two",
+          "Three",
+          "None if ATIS is available"
+        ],
+        answer: 0,
+        explanation: "The expected exam answer is at least one wind sock."
+      },
+      {
+        q: "22) Which one correctly shows the components of TORA?",
+        choices: [
+          "Runway + displaced threshold",
+          "Runway + Clearway",
+          "Runway + Stopway",
+          "Runway + Clearway + Stopway"
+        ],
+        answer: 0,
+        explanation: "TORA is the take-off run available. In this exam logic, it includes runway plus any displaced threshold available for take-off."
+      },
+      {
+        q: "23) Which one correctly shows the components of TODA?",
+        choices: [
+          "Runway",
+          "Runway + Stopway",
+          "Runway + Clearway",
+          "Runway + Clearway + Stopway"
+        ],
+        answer: 2,
+        explanation: "TODA is take-off distance available, which is TORA plus clearway."
+      },
+      {
+        q: "24) Which one correctly shows the components of ASDA?",
+        choices: [
+          "Runway",
+          "Runway + Stopway",
+          "Runway + Clearway",
+          "Runway + Clearway + Stopway"
+        ],
+        answer: 1,
+        explanation: "ASDA is accelerate-stop distance available, which is TORA plus stopway."
+      },
+      {
+        q: "25) Which one correctly shows the components of LDA?",
+        choices: [
+          "Runway",
+          "Runway + Stopway",
+          "Runway + Clearway",
+          "Runway + Clearway + Stopway"
+        ],
+        answer: 0,
+        explanation: "LDA is landing distance available. In this simplified exam format, the correct choice is runway."
+      },
+      {
+        q: "26) In PCN reporting, what does the letter T mean?",
+        choices: [
+          "Temporary surface",
+          "Technical evaluation",
+          "Taxiway use only",
+          "Test condition"
+        ],
+        answer: 1,
+        explanation: "In PCN reporting, T means the value was determined by technical evaluation."
+      },
+      {
+        q: "27) In PCN reporting, what does the letter U mean?",
+        choices: [
+          "Using aircraft experience",
+          "Unpaved surface",
+          "Urgent status",
+          "Unlimited strength"
+        ],
+        answer: 0,
+        explanation: "In PCN reporting, U means the value was determined using aircraft experience."
+      },
+      {
+        q: "28) Runway center line lights are normally provided for which categories?",
+        choices: [
+          "CAT I only",
+          "CAT II and CAT III",
+          "Visual runways only",
+          "Non-instrument runways only"
+        ],
+        answer: 1,
+        explanation: "Runway center line lights are typically associated with CAT II and CAT III operations."
+      },
+      {
+        q: "29) What colors are shown by a land aerodrome beacon?",
+        choices: [
+          "Red and green",
+          "Blue and white",
+          "Green and white",
+          "Amber and red"
+        ],
+        answer: 2,
+        explanation: "A land aerodrome beacon normally displays green and white."
+      }
+    ];
+
+    const quizEl = document.getElementById("quiz");
+    const total = quizData.length;
+    document.getElementById("totalA").textContent = total;
+    document.getElementById("totalB").textContent = total;
+
+    let score = 0;
+    let answered = 0;
+
+    function renderQuiz(){
+      quizEl.innerHTML = "";
+      quizData.forEach((item, index) => {
+        const card = document.createElement("div");
+        card.className = "card";
+
+        const qnum = document.createElement("div");
+        qnum.className = "qnum";
+        qnum.textContent = `Question ${index + 1}`;
+
+        const question = document.createElement("div");
+        question.className = "question";
+        question.textContent = item.q;
+
+        const choices = document.createElement("div");
+        choices.className = "choices";
+
+        const feedback = document.createElement("div");
+        feedback.className = "feedback";
+
+        item.choices.forEach((text, choiceIndex) => {
+          const btn = document.createElement("button");
+          btn.className = "choice";
+          btn.innerHTML = `<strong>${String.fromCharCode(65 + choiceIndex)}.</strong> ${text}`;
+          btn.addEventListener("click", () => handleChoice(item, choiceIndex, btn, choices, feedback));
+          choices.appendChild(btn);
+        });
+
+        card.appendChild(qnum);
+        card.appendChild(question);
+        card.appendChild(choices);
+        card.appendChild(feedback);
+        quizEl.appendChild(card);
+      });
+    }
+
+    function handleChoice(item, choiceIndex, selectedBtn, choicesEl, feedbackEl){
+      if (choicesEl.dataset.locked === "true") return;
+      choicesEl.dataset.locked = "true";
+
+      const buttons = choicesEl.querySelectorAll(".choice");
+      buttons.forEach((btn, idx) => {
+        btn.classList.add("locked");
+        if (idx === item.answer) btn.classList.add("correct");
+      });
+
+      answered += 1;
+      if (choiceIndex === item.answer){
+        score += 1;
+        feedbackEl.classList.add("show", "ok");
+        feedbackEl.innerHTML = `<strong>Correct — +1 point</strong>${item.explanation}`;
+      } else {
+        selectedBtn.classList.add("wrong");
+        feedbackEl.classList.add("show", "bad");
+        feedbackEl.innerHTML = `<strong>Incorrect</strong>${item.explanation}`;
+      }
+      updateScore();
+    }
+
+    function updateScore(){
+      document.getElementById("score").textContent = score;
+      document.getElementById("answered").textContent = answered;
+    }
+
+    function resetQuiz(){
+      score = 0;
+      answered = 0;
+      updateScore();
+      renderQuiz();
+    }
+
+    renderQuiz();
+    updateScore();
+  </script>
+</body>
+</html>
